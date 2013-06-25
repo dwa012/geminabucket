@@ -1,12 +1,30 @@
+# Copyright (C) 2013 Alexis Midon / All rights reserved.
+#
+# Licensed to the Apache Software Foundation (ASF) under one or more contributor
+# license agreements.  See the NOTICE file  distributed with this work for
+# additional information regarding copyright ownership.  The ASF licenses this
+# file to you under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License.  You may obtain a copy of
+# the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
+# License for the specific language governing permissions and limitations under
+# the License.
+
+
 require 'aws/s3'
 
 
-class Gemins3::RemoteFetcher < Gem::RemoteFetcher
+class Geminabucket::RemoteFetcher < Gem::RemoteFetcher
 
   # Gem::RemoteFetcher#download would need some refactoring to
   # allow dispatching based on the scheme (download_http, download_s3, etc),
   # and to centalize parameter handling.
-  #
+  # But meanwhile we have to override #download
   def download(spec, source_uri, install_dir = Gem.dir)
     unless URI::Generic === source_uri
       source_uri = URI.parse(URI.const_defined?(:DEFAULT_PARSER) ?
@@ -21,6 +39,7 @@ class Gemins3::RemoteFetcher < Gem::RemoteFetcher
     end
   end
 
+  # :nodoc:
   def download_s3(spec, source_uri, install_dir = Gem.dir)
     cache_dir =
         if Dir.pwd == install_dir then # see fetch_command
@@ -39,7 +58,11 @@ class Gemins3::RemoteFetcher < Gem::RemoteFetcher
       begin
         say "Downloading gem #{gem_file_name}" if Gem.configuration.really_verbose
         remote_gem_path = source_uri + "gems/#{gem_file_name}"
+
+        # this method will eventually dispatch to #fetch_s3
         self.cache_update_path remote_gem_path, local_gem_path
+
+
       rescue Gem::RemoteFetcher::FetchError
         raise if spec.original_platform == spec.platform
         alternate_name = "#{spec.original_name}.gem"
@@ -49,7 +72,6 @@ class Gemins3::RemoteFetcher < Gem::RemoteFetcher
       end
     end
 
-
     local_gem_path
   end
 
@@ -58,14 +80,14 @@ class Gemins3::RemoteFetcher < Gem::RemoteFetcher
   #
   def fetch_s3 uri, last_modified = nil, head = false, depth = 0
     begin
-      say "fetching #{uri}" if Gem.configuration.verbose
+      say "fetching #{uri}" if Gem.configuration.really_verbose
+      reporter = ui.download_reporter
+      reporter.fetch(File.basename(uri.path), object.content_length)
+
       bucket, key = bucket_and_key(uri)
 
       object = s3.buckets[bucket].objects[key]
-      raise FetchError.new("This key does not exists", uri.to_s) unless object.exists?
-
-      reporter = ui.download_reporter
-      reporter.fetch(File.basename(uri.path), object.content_length)
+      raise FetchError.new("This S3 object does not exists", uri.to_s) unless object.exists?
 
       data = ''
       downloaded = 0
