@@ -59,9 +59,16 @@ class Geminabucket::RemoteFetcher < Gem::RemoteFetcher
         say "Downloading gem #{gem_file_name}" if Gem.configuration.really_verbose
         remote_gem_path = source_uri + "gems/#{gem_file_name}"
 
-        # this method will eventually dispatch to #fetch_s3
-        self.cache_update_path remote_gem_path, local_gem_path
 
+        if self.respond_to? :cache_update_path
+          self.cache_update_path remote_gem_path, local_gem_path
+        else
+          # compatible with rubygems 1.8.3
+          gem = self.fetch_path remote_gem_path
+          File.open local_gem_path, 'wb' do |fp|
+            fp.write gem
+          end
+        end
 
       rescue Gem::RemoteFetcher::FetchError
         raise if spec.original_platform == spec.platform
