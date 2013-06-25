@@ -82,12 +82,13 @@ class Geminabucket::RemoteFetcher < Gem::RemoteFetcher
     begin
       say "fetching #{uri}" if Gem.configuration.really_verbose
       reporter = ui.download_reporter
-      reporter.fetch(File.basename(uri.path), object.content_length)
 
       bucket, key = bucket_and_key(uri)
 
       object = s3.buckets[bucket].objects[key]
       raise FetchError.new("This S3 object does not exists", uri.to_s) unless object.exists?
+
+      reporter.fetch(File.basename(uri.path), object.content_length)
 
       data = ''
       downloaded = 0
