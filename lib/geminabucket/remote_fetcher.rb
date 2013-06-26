@@ -128,7 +128,15 @@ class Geminabucket::RemoteFetcher < Gem::RemoteFetcher
   end
 
   def s3
-    @s3 ||= ::AWS::S3.new
+    unless @s3
+      creds = {}
+      if o = Gem.configuration["geminabucket"]
+        creds[:access_key_id] = o["access_key_id"]
+        creds[:secret_access_key] = o["secret_access_key"]
+      end
+      @s3 = ::AWS::S3.new(creds)
+    end
+    @s3
   end
 end
 

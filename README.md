@@ -47,6 +47,14 @@ From the [documentation](http://docs.aws.amazon.com/AWSRubySDK/latest/AWS/Core/C
 > * The environment (e.g. ENV['AWS_ACCESS_KEY_ID'] or ENV['AMAZON_ACCESS_KEY_ID'])
 > * EC2 metadata service (checks for credentials provided by roles for instances).
 
+In addition, an AWS key can be set in a `gemrc` config file (`/etc/gemrc` or `~.gemrc`):
+```yaml
+---
+geminabucket: {
+    access_key_id: "...",
+    secret_access_key: "..."
+}
+```
 
 ## Contributing
 
