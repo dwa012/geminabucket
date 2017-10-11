@@ -33,7 +33,7 @@ S3 buckets are accessed with the official aws-sdk gem.
 
   spec.extra_rdoc_files = ['README.md', 'Changelog.md']
 
-  spec.add_dependency "aws-sdk", ["~> 1.8.3"]
+  spec.add_dependency "aws-sdk", ["~> 2"]
   spec.add_development_dependency "bundler", "~> 1.3"
   spec.add_development_dependency "rake"
 end

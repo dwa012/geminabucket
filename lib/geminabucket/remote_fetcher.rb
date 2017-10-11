@@ -16,7 +16,7 @@
 # the License.
 
 
-require 'aws/s3'
+require 'aws-sdk'
 
 
 class Geminabucket::RemoteFetcher < Gem::RemoteFetcher
@@ -92,20 +92,21 @@ class Geminabucket::RemoteFetcher < Gem::RemoteFetcher
 
       bucket, key = bucket_and_key(uri)
 
-      object = s3.buckets[bucket].objects[key]
+      object = s3.buckets(bucket).object(key)
       raise FetchError.new("This S3 object does not exists", uri.to_s) unless object.exists?
 
-      reporter.fetch(File.basename(uri.path), object.content_length)
+      #reporter.fetch(File.basename(uri.path), object.content_length)
 
       data = ''
-      downloaded = 0
+      object.get(response_target: data)
+      #downloaded = 0
 
-      object.read do |chunk|
-        data << chunk
-        downloaded += chunk.length
-        reporter.update(downloaded)
-      end
-      reporter.done
+      #object.read do |chunk|
+      #  data << chunk
+      #  downloaded += chunk.length
+      #  reporter.update(downloaded)
+      #end
+      #reporter.done
       data
     rescue => e
       raise FetchError.new("#{e.class}: #{e}", uri.to_s)
@@ -134,7 +135,7 @@ class Geminabucket::RemoteFetcher < Gem::RemoteFetcher
         creds[:access_key_id] = o["access_key_id"]
         creds[:secret_access_key] = o["secret_access_key"]
       end
-      @s3 = ::AWS::S3.new(creds)
+      @s3 = ::Aws::S3::Resource.new #::Aws::S3.new(creds)
     end
     @s3
   end
